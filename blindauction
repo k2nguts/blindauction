@@ -1,0 +1,79 @@
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.4;
+
+contract SimplAuction{
+address payable public beneficiary;
+uint public auctionEndTime;
+
+address public highestbidder;
+uint public highestbid;
+
+mapping(address=> uint) pendingReturns;
+
+bool ended;
+
+event HighestBidIncreased(address bidder,uint amount);
+event AuctionEnded(address winner,uint amount);
+
+error Auctionalreadyended();
+error bidnothighenough(uint highestBid);
+error AuctionNotYetEnded();
+error AuctionEndAlreadtCalled();
+
+constructor(
+    uint biddingTime,
+    address payable benceficiaryAdress
+)
+{
+    beneficiary = benceficiaryAdress;
+    auctionEndTime = block.timestamp + biddingTime;
+}
+
+function bid()external payable {
+    if (block.timestamp > auctionEndTime)
+        revert Auctionalreadyended();
+    
+    if(msg.value <= highestbid)
+        revert bidnothighenough(highestbid);
+    
+    if(highestbid != 0){
+        pendingReturns[highestbidder] += highestbid;
+    }
+
+highestbidder = msg.sender;
+highestbid = msg.value;
+emit HighestBidIncreased(msg.sender, msg.value); 
+
+
+}
+function withdraw() external returns (bool) {
+    uint amount = pendingReturns[msg.sender];
+    if (amount > 0){
+        pendingReturns[msg.sender] = 0;
+
+    if(!payable(msg.sender).send(amount)) {
+        pendingReturns[msg.sender] = amount;
+        return false;
+    }
+    }
+return true;
+}
+function auctionEnd() external {
+   
+//1. conditions
+    if (block.timestamp< auctionEndTime)
+        revert AuctionNotYetEnded();
+    if(ended)
+        revert  AuctionEndAlreadtCalled();
+//2. effect
+ended = true;
+emit AuctionEnded(highestbidder, highestbid);
+
+//3. interaction
+beneficiary.transfer(highestbid);
+
+}
+
+
+
+}
