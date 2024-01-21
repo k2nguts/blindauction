@@ -22,64 +22,11 @@ to.transfer(amount);
 balance -= amount;
 emit sent(msg.sender, to, amount);
 }
-function TRANSFERERC20(IERC20 token) public {
-    
+function TRANSFERERC20(IERC20 token,address to, uint amount) public {
+    require(owner==msg.sender);
+    uint256 erc20balance= token.balanceOf(address(this));
+    require(balance>=amount);
+    token.transfer(to, amount);
+    emit sent(msg.sender, to, amount);
 }
 }
-
-
-
-
-
-// SPDX-License-Identifier: MIT
- pragma solidity ^0.8.4;
-
-contract tracker{
-uint storagedata;
-function set(uint x) public {
-
-storagedata = x;
-}
-function get() public  view returns (uint){
-return storagedata;
-}
-
-}  
-//sımplest solidity coin contract
-contract coin{
-address public minter;
-mapping (address => uint) public balances;
-event sent(address from, address to,uint amount);
-
-constructor(){
-    minter = msg.sender;
-}
- 
-function mint(address receiver, uint amount) public { //sadece deploy eden tarafından çağırılabılır
-require(minter==msg.sender);   //creat edilen tokenı gönderir
-balances[receiver] += amount;
-}
-
-error insufficientBalance(uint requested,uint avaliable);
-
-
-function send(address receiver , uint amount) public {  //send existing coins
-    if(amount > balances[msg.sender])
-    revert insufficientBalance({requested: amount,avaliable: balances[msg.sender]});
-
-balances[msg.sender] -= amount;
-balances[receiver]   += amount;
-emit sent(msg.sender, receiver, amount);
-
-}
- //coin görmek için bir blockchain expolerer kurulması gerekıyor   
-
-}
-
-
-
-
-
-
-
-
